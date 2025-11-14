@@ -16,7 +16,6 @@ message(STATUS "LLVM_DEFINITIONS: ${LLVM_DEFINITIONS}")
 # for your compiler.
 
 include_directories(${LLVM_INCLUDE_DIRS})
-include_directories(/usr/include/llvm-14)
 add_definitions(${LLVM_DEFINITIONS})
 
 add_executable(testllvm src/main.cpp)
