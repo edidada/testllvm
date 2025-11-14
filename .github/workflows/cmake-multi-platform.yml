@@ -49,7 +49,7 @@ jobs:
           - os: windows-latest
             c_compiler: gcc
           - os: windows-latest
-            c_compiler: cl
+            c_compiler: clang
 
     steps:
     - uses: actions/checkout@v4
