@@ -1,5 +1,5 @@
 # README
-
+llvm18可以，llvm14不行的
 ```shell
 /mnt/d/develops/git/github/cpp/testllvm/cmake-build-debug-wsl24/testllvm
 ; ModuleID = 'jit_module'
