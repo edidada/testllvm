@@ -50,10 +50,12 @@ int main(int argc, char* argv[]) {
     ThreadSafeContext TSC(std::move(Context));  // Context 移入 TSC
     cantFail(JIT->addIRModule(ThreadSafeModule(std::move(M), TSC)));
 
-    // 9. 查找符号（LLVM 18 写法：直接 getAddress() → uint64_t）
+    // 9. 查找符号 (LLVM 18+ 写法：使用 toPtr<T>() 安全转换)
+    using AddFunction = int(*)(int, int);
+
     auto AddSym = cantFail(JIT->lookup("add"));
-    JITTargetAddress Addr = AddSym.getAddress();  // 直接 uint64_t
-    auto *add = reinterpret_cast<int(*)(int, int)>(static_cast<uintptr_t>(Addr));
+    // 使用 toPtr<T>() 直接将 ExecutorAddr 转换为函数指针
+    auto *add = AddSym.toPtr<AddFunction>();
 
     std::cout << "3 + 4 = " << add(3, 4) << std::endl;
 
