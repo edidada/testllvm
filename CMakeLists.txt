@@ -71,18 +71,24 @@ else()
     include_directories(${LLVM_INCLUDE_DIRS})
     add_definitions(${LLVM_DEFINITIONS})
 
-    # 自动映射组件
+    # 链接 LLVM 库（推荐使用组件）
     llvm_map_components_to_libnames(llvm_libs
-            core support executionengine orcjit orctargetprocess runtimedyld
-            mc mcparser object bitreader bitwriter transformutils analysis
-            target x86codegen x86desc x86info
+            core
+            executionengine
+            orcjit
+            native
+            support
     )
 
     add_executable(testllvm src/main.cpp)
     add_executable(testpass src/testpass.cpp)
     add_executable(testpass2 src/testpass2.cpp)
+    add_executable(adt_string src/adt_string.cpp)
+    add_executable(adt src/adt.cpp)
 
     target_link_libraries(testllvm ${llvm_libs})
     target_link_libraries(testpass ${llvm_libs})
     target_link_libraries(testpass2 ${llvm_libs})
+    target_link_libraries(adt_string ${llvm_libs})
+    target_link_libraries(adt ${llvm_libs})
 endif()
