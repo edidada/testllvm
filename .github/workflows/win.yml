@@ -57,6 +57,8 @@ jobs:
         7z x llvm.tar.xz -oC:\LLVM -y
         cd "C:\LLVM"
         dir
+        7z x llvm.tar -oC:\LLVM
+        dir
 
     - name: Set environment variables
       run: |
