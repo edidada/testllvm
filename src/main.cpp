@@ -1,4 +1,3 @@
-// main.cpp - LLVM 18 最终修复版
 #include <cstdint>
 
 #include "llvm/ExecutionEngine/Orc/LLJIT.h"
