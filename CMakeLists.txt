@@ -38,16 +38,22 @@ if(WIN32)
     add_executable(testllvm src/main.cpp)
     add_executable(testpass src/testpass.cpp)
     add_executable(testpass2 src/testpass2.cpp)
+    add_executable(adt_string src/adt_string.cpp)
+    add_executable(adt src/adt.cpp)
 
     # 链接 LLVM 库
     target_link_libraries(testllvm ${LLVM_LIBS})
     target_link_libraries(testpass ${LLVM_LIBS})
     target_link_libraries(testpass2 ${LLVM_LIBS})
+    target_link_libraries(adt_string ${LLVM_LIBS})
+    target_link_libraries(adt ${LLVM_LIBS})
 
     # Windows 特定链接选项
     target_link_libraries(testllvm advapi32 shell32)
     target_link_libraries(testpass advapi32 shell32)
     target_link_libraries(testpass2 advapi32 shell32)
+    target_link_libraries(adt_string advapi32 shell32)
+    target_link_libraries(adt advapi32 shell32)
 
 else()
     find_package(LLVM REQUIRED CONFIG)
