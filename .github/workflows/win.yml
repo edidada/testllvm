@@ -59,16 +59,18 @@ jobs:
         dir
         7z x llvm.tar -oC:\LLVM
         dir
+        cd clang+llvm-18.1.8-x86_64-pc-windows-msvc
+        dir
 
     - name: Set environment variables
       run: |
-        echo "LLVM_PREFIX=C:\LLVM" >> $env:GITHUB_ENV
-        echo "PATH=C:\LLVM\bin;$env:PATH" >> $env:GITHUB_ENV
+        echo "LLVM_PREFIX=C:\LLVM\clang+llvm-18.1.8-x86_64-pc-windows-msvc" >> $env:GITHUB_ENV
+        echo "PATH=C:\LLVM\clang+llvm-18.1.8-x86_64-pc-windows-msvc\bin;$env:PATH" >> $env:GITHUB_ENV
 
     - name: Verify installation
       run: |
         llvm-config --version
-        dir C:\LLVM\bin\llvm-config.exe
+        dir C:\LLVM\clang+llvm-18.1.8-x86_64-pc-windows-msvc\bin\llvm-config.exe
 
     - name: Configure CMake
       # Configure CMake in a 'build' subdirectory. `CMAKE_BUILD_TYPE` is only required if you are using a single-configuration generator such as make.
