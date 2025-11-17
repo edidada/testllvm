@@ -49,7 +49,7 @@ jobs:
           - os: windows-latest
             c_compiler: gcc
           - os: windows-latest
-            c_compiler: cl
+            c_compiler: clang
 
     steps:
     - uses: actions/checkout@v4
@@ -72,6 +72,9 @@ jobs:
       run: |
         brew update
         brew install llvm
+        export LDFLAGS="-L/opt/homebrew/opt/llvm/lib"
+        export CPPFLAGS="-I/opt/homebrew/opt/llvm/include"
+        export CMAKE_PREFIX_PATH="/opt/homebrew/opt/llvm"
 
     - name: win vcpkg install deps
       if: runner.os == 'Windows'
