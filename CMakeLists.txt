@@ -30,5 +30,9 @@ llvm_map_components_to_libnames(llvm_libs
 # 可执行文件
 
 add_executable(testllvm src/main.cpp)
+add_executable(testpass src/testpass.cpp)
+#add_executable(testpass2 src/testpass2.cpp)
 # 链接 LLVM
 target_link_libraries(testllvm ${llvm_libs})
+target_link_libraries(testpass ${llvm_libs})
+#target_link_libraries(testpass2 ${llvm_libs})
