@@ -18,8 +18,7 @@ if(WIN32)
             core
             support
             orcjit
-            nativecodegen
-            x64codegen
+            native
     )
     # VS2022 Enterprise 默认 DIA SDK 路径
     set(DIA_SDK_ROOT "C:/Program Files/Microsoft Visual Studio/2022/Enterprise/DIA SDK")
