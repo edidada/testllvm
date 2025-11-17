@@ -76,10 +76,25 @@ jobs:
         export CPPFLAGS="-I/opt/homebrew/opt/llvm/include"
         export CMAKE_PREFIX_PATH="/opt/homebrew/opt/llvm"
 
+    - name: Set up LLVM environment
+      if: runner.os == 'macOS'
+      run: |
+        echo "LLVM_DIR=$(brew --prefix llvm)/lib/cmake/llvm" >> $GITHUB_ENV
+        echo "PATH=$(brew --prefix llvm)/bin:$PATH" >> $GITHUB_ENV
+        echo "LDFLAGS=-L$(brew --prefix llvm)/lib -Wl,-rpath,$(brew --prefix llvm)/lib" >> $GITHUB_ENV
+        echo "CPPFLAGS=-I$(brew --prefix llvm)/include" >> $GITHUB_ENV
+
     - name: win vcpkg install deps
       if: runner.os == 'Windows'
       run: |
-        vcpkg install llvm:x64-windows
+#        vcpkg install llvm:x64-windows
+
+    - name: Install LLVM via Chocolatey
+      if: runner.os == 'Windows'
+      run: |
+        choco install llvm -y --version=18.0.0
+        echo "LLVM_DIR=C:\Program Files\LLVM\lib\cmake\llvm" >> $env:GITHUB_ENV
+        echo "PATH=C:\Program Files\LLVM\bin;$env:PATH" >> $env:GITHUB_ENV
 
     - name: Configure CMake
       # Configure CMake in a 'build' subdirectory. `CMAKE_BUILD_TYPE` is only required if you are using a single-configuration generator such as make.
