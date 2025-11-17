@@ -96,16 +96,33 @@ jobs:
       run: |
 #        vcpkg install llvm:x64-windows
 
+
+    - name: Install 7-Zip (for tar.xz extraction)
+      uses: burnsra/psaction-install-7zip@v1.1
+      if: runner.os == 'Windows'
+
     - name: Install LLVM via Chocolatey
       if: runner.os == 'Windows'
       run: |
-        choco search llvm --all-versions -r
-        choco info llvm
-        choco install llvm -y --version=18.1.8 --force
-        echo "验证Chocolatey安装"
-        choco list | findstr llvm
-        echo "LLVM_DIR=C:\Program Files\LLVM\lib\cmake\llvm" >> $env:GITHUB_ENV
-        echo "PATH=C:\Program Files\LLVM\bin;$env:PATH" >> $env:GITHUB_ENV
+#        choco search llvm --all-versions -r
+#        choco info llvm
+#        choco install llvm -y --version=18.1.8 --force
+#        echo "验证Chocolatey安装"
+#        choco list | findstr llvm
+#        echo "LLVM_DIR=C:\Program Files\LLVM\lib\cmake\llvm" >> $env:GITHUB_ENV
+#        echo "PATH=C:\Program Files\LLVM\bin;$env:PATH" >> $env:GITHUB_ENV
+          $llvmUrl = "https://github.com/llvm/llvm-project/releases/download/llvmorg-18.1.8/clang+llvm-18.1.8-x86_64-pc-windows-msvc.tar.xz"
+          $downloadPath = "$env:RUNNER_TEMP\llvm.tar.xz"
+          Invoke-WebRequest -Uri $llvmUrl -OutFile $downloadPath
+          echo "LLVM downloaded to $downloadPath"
+          $downloadPath = "$env:RUNNER_TEMP\llvm.tar.xz"
+          $extractPath = "$env:RUNNER_TEMP\llvm"
+          7z x $downloadPath -o"$extractPath" -y
+          echo "LLVM extracted to $extractPath"
+          $llvmPath = "$env:RUNNER_TEMP\llvm\clang+llvm-18.1.8-x86_64-pc-windows-msvc"
+          echo "LLVM_PATH=$llvmPath" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
+          echo "Path=$llvmPath\bin;$env:Path" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
+          echo "Added LLVM to PATH: $llvmPath\bin"
 
     - name: Configure CMake
       # Configure CMake in a 'build' subdirectory. `CMAKE_BUILD_TYPE` is only required if you are using a single-configuration generator such as make.
