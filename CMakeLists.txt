@@ -6,6 +6,8 @@ set(CMAKE_CXX_STANDARD 17)
 # Windows 特定设置
 if(WIN32)
     # 手动设置路径
+    set(LLVM_DIR "C:/LLVM/clang+llvm-18.1.8-x86_64-pc-windows-msvc/lib/cmake/llvm")
+    find_package(LLVM REQUIRED CONFIG)
     set(LLVM_PREFIX "C:/LLVM/clang+llvm-18.1.8-x86_64-pc-windows-msvc")
     set(LLVM_INCLUDE_DIRS "${LLVM_PREFIX}/include")
     set(LLVM_LIBRARY_DIRS "${LLVM_PREFIX}/lib")
@@ -13,43 +15,16 @@ if(WIN32)
     include_directories(${LLVM_INCLUDE_DIRS})
     link_directories(${LLVM_LIBRARY_DIRS})
 
-    # Windows 上需要链接更多的 LLVM 库
-    set(LLVM_LIBS
-            LLVMCore
-            LLVMSupport
-            LLVMExecutionEngine
-            LLVMOrcJIT
-            LLVMOrcTargetProcess
-            LLVMRuntimeDyld
-            LLVMMC
-            LLVMMCParser
-            LLVMObject
-            LLVMBitReader
-            LLVMBitWriter
-            LLVMTransformUtils
-            LLVMAnalysis
-            LLVMTarget
-            LLVMX86CodeGen
-            LLVMX86Desc
-            LLVMX86Info
-            LLVMMCJIT
-            LLVMInterpreter
-            LLVMCodeGen
-            LLVMScalarOpts
-            LLVMInstCombine
-            LLVMInstrumentation
-            LLVMipo
-            LLVMVectorize
-            LLVMObjCARCOpts
-            LLVMCoroutines
-            LLVMLinker
-            LLVMPasses
+    llvm_map_components_to_libnames(LLVM_LIBS
+            core
+            support
+            orcjit
+            nativecodegen
     )
-
     # 添加可执行文件
     add_executable(testllvm src/main.cpp)
-    add_library(testpass MODULE src/testpass.cpp)
-    add_library(testpass2 MODULE src/testpass2.cpp)
+    add_executable(testpass src/testpass.cpp)
+    add_executable(testpass2 src/testpass2.cpp)
 
     # 链接 LLVM 库
     target_link_libraries(testllvm ${LLVM_LIBS})
