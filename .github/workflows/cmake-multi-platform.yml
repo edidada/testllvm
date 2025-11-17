@@ -123,7 +123,6 @@ jobs:
             Remove-Item -Recurse -Force $installPath
         }
         Move-Item $llvmDir.FullName $installPath
-        echo "LLVM installed to: $installPath"
 
     - name: Set environment variables
       run: |
