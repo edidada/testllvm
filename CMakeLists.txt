@@ -32,7 +32,6 @@ if(WIN32)
             LLVMX86CodeGen
             LLVMX86Desc
             LLVMX86Info
-            LLVMX86Utils
             LLVMMCJIT
             LLVMInterpreter
             LLVMCodeGen
