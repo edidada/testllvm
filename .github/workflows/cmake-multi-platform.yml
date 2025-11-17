@@ -78,6 +78,8 @@ jobs:
     - name: Set up LLVM environment
       if: runner.os == 'macOS'
       run: |
+        echo "CC=/opt/homebrew/opt/llvm@18/bin/clang" >> $GITHUB_ENV
+        echo "CXX=/opt/homebrew/opt/llvm@18/bin/clang++" >> $GITHUB_ENV
         echo "LLVM_DIR=$(brew --prefix llvm@18)/lib/cmake/llvm" >> $GITHUB_ENV
         echo "PATH=$(brew --prefix llvm@18)/bin:$PATH" >> $GITHUB_ENV
         echo "LDFLAGS=-L$(brew --prefix llvm@18)/lib -Wl,-rpath,$(brew --prefix llvm)/lib" >> $GITHUB_ENV
