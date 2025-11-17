@@ -97,9 +97,9 @@ jobs:
 #        vcpkg install llvm:x64-windows
 
 
-    - name: Install 7-Zip (for tar.xz extraction)
-      uses: burnsra/psaction-install-7zip@v1.1
-      if: runner.os == 'Windows'
+#    - name: Install 7-Zip (for tar.xz extraction)
+#      uses: burnsra/psaction-install-7zip@v1.1
+#      if: runner.os == 'Windows'
 
     - name: Install LLVM via Chocolatey
       if: runner.os == 'Windows'
@@ -111,18 +111,27 @@ jobs:
 #        choco list | findstr llvm
 #        echo "LLVM_DIR=C:\Program Files\LLVM\lib\cmake\llvm" >> $env:GITHUB_ENV
 #        echo "PATH=C:\Program Files\LLVM\bin;$env:PATH" >> $env:GITHUB_ENV
-          $llvmUrl = "https://github.com/llvm/llvm-project/releases/download/llvmorg-18.1.8/clang+llvm-18.1.8-x86_64-pc-windows-msvc.tar.xz"
-          $downloadPath = "$env:RUNNER_TEMP\llvm.tar.xz"
-          Invoke-WebRequest -Uri $llvmUrl -OutFile $downloadPath
-          echo "LLVM downloaded to $downloadPath"
-          $downloadPath = "$env:RUNNER_TEMP\llvm.tar.xz"
-          $extractPath = "$env:RUNNER_TEMP\llvm"
-          7z x $downloadPath -o"$extractPath" -y
-          echo "LLVM extracted to $extractPath"
-          $llvmPath = "$env:RUNNER_TEMP\llvm\clang+llvm-18.1.8-x86_64-pc-windows-msvc"
-          echo "LLVM_PATH=$llvmPath" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
-          echo "Path=$llvmPath\bin;$env:Path" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
-          echo "Added LLVM to PATH: $llvmPath\bin"
+        $llvmUrl = "https://github.com/llvm/llvm-project/releases/download/llvmorg-18.1.8/clang+llvm-18.1.8-x86_64-pc-windows-msvc.tar.xz"
+        $downloadPath = "$env:RUNNER_TEMP\llvm.tar.xz"
+        Invoke-WebRequest -Uri $llvmUrl -OutFile $downloadPath
+        echo "LLVM downloaded to $downloadPath"
+        $downloadPath = "$env:RUNNER_TEMP\llvm.tar.xz"
+        $extractPath = "$env:RUNNER_TEMP\llvm-extracted"
+        7z x $downloadPath -o"$extractPath" -y
+        $llvmDir = Get-ChildItem -Path $extractPath -Directory | Select-Object -First 1
+        if (Test-Path $installPath) {
+            Remove-Item -Recurse -Force $installPath
+        }
+        Move-Item $llvmDir.FullName $installPath
+        echo "LLVM installed to: $installPath"
+
+    - name: Set environment variables
+      run: |
+        $installPath = "C:\LLVM-18.1.8"
+        echo "LLVM_PREFIX=$installPath" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
+        echo "Path=$installPath\bin;$env:Path" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
+        dir "$installPath\bin" | findstr "llvm-config.exe"
+        echo "LLVM installed successfully"
 
     - name: Configure CMake
       # Configure CMake in a 'build' subdirectory. `CMAKE_BUILD_TYPE` is only required if you are using a single-configuration generator such as make.
