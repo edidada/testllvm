@@ -91,14 +91,10 @@ jobs:
         echo "CXX: $CXX"
         echo "LLVM_DIR: $LLVM_DIR"
 
-    - name: win vcpkg install deps
-      if: runner.os == 'Windows'
-      run: |
-#        vcpkg install llvm:x64-windows
-
     - name: Install LLVM via Chocolatey
       if: runner.os == 'Windows'
       run: |
+#        vcpkg install llvm:x64-windows
 #        choco search llvm --all-versions -r
 #        choco info llvm
 #        choco install llvm -y --version=18.1.8 --force
