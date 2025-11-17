@@ -12,7 +12,57 @@ if(WIN32)
 
     include_directories(${LLVM_INCLUDE_DIRS})
     link_directories(${LLVM_LIBRARY_DIRS})
-else ()
+
+    # Windows 上需要链接更多的 LLVM 库
+    set(LLVM_LIBS
+            LLVMCore
+            LLVMSupport
+            LLVMExecutionEngine
+            LLVMOrcJIT
+            LLVMOrcTargetProcess
+            LLVMRuntimeDyld
+            LLVMMC
+            LLVMMCParser
+            LLVMObject
+            LLVMBitReader
+            LLVMBitWriter
+            LLVMTransformUtils
+            LLVMAnalysis
+            LLVMTarget
+            LLVMX86CodeGen
+            LLVMX86Desc
+            LLVMX86Info
+            LLVMX86Utils
+            LLVMMCJIT
+            LLVMInterpreter
+            LLVMCodeGen
+            LLVMScalarOpts
+            LLVMInstCombine
+            LLVMInstrumentation
+            LLVMipo
+            LLVMVectorize
+            LLVMObjCARCOpts
+            LLVMCoroutines
+            LLVMLinker
+            LLVMPasses
+    )
+
+    # 添加可执行文件
+    add_executable(testllvm src/main.cpp)
+    add_library(testpass MODULE src/testpass.cpp)
+    add_library(testpass2 MODULE src/testpass2.cpp)
+
+    # 链接 LLVM 库
+    target_link_libraries(testllvm ${LLVM_LIBS})
+    target_link_libraries(testpass ${LLVM_LIBS})
+    target_link_libraries(testpass2 ${LLVM_LIBS})
+
+    # Windows 特定链接选项
+    target_link_libraries(testllvm advapi32 shell32)
+    target_link_libraries(testpass advapi32 shell32)
+    target_link_libraries(testpass2 advapi32 shell32)
+
+else()
     find_package(LLVM REQUIRED CONFIG)
 
     message(STATUS "Found LLVM ${LLVM_PACKAGE_VERSION}")
@@ -27,38 +77,19 @@ else ()
 
     include_directories(${LLVM_INCLUDE_DIRS})
     add_definitions(${LLVM_DEFINITIONS})
-    # 链接 LLVM 库（推荐使用组件）
+
+    # 自动映射组件
     llvm_map_components_to_libnames(llvm_libs
-            core
-            executionengine
-            orcjit
-            native
-            support
+            core support executionengine orcjit orctargetprocess runtimedyld
+            mc mcparser object bitreader bitwriter transformutils analysis
+            target x86codegen x86desc x86info
     )
 
-endif()
-# 可执行文件
+    add_executable(testllvm src/main.cpp)
+    add_library(testpass MODULE src/testpass.cpp)
+    add_library(testpass2 MODULE src/testpass2.cpp)
 
-add_executable(testllvm src/main.cpp)
-add_executable(testpass src/testpass.cpp)
-add_executable(testpass2 src/testpass2.cpp)
-# 链接 LLVM
-target_link_libraries(testllvm ${llvm_libs})
-target_link_libraries(testpass ${llvm_libs})
-target_link_libraries(testpass2 ${llvm_libs})
-
-# Windows 特定设置
-if(WIN32)
-    # 添加 Windows 特定的链接选项
-    target_link_libraries(testllvm advapi32 shell32)
-    target_link_libraries(testpass advapi32 shell32)
-
-    # 设置字符集
-    add_compile_definitions(UNICODE _UNICODE)
-
-    # 如果是 Debug 构建，链接调试库
-    if(CMAKE_BUILD_TYPE STREQUAL "Debug")
-        target_link_libraries(testllvm debug LLVM-C)
-        target_link_libraries(testpass debug LLVM-C)
-    endif()
+    target_link_libraries(testllvm ${llvm_libs})
+    target_link_libraries(testpass ${llvm_libs})
+    target_link_libraries(testpass2 ${llvm_libs})
 endif()
