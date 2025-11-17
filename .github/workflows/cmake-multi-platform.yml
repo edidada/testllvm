@@ -52,91 +52,67 @@ jobs:
             c_compiler: clang
 
     steps:
-    - uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
-    - name: Set reusable strings
-      # Turn repeated input strings (such as the build output directory) into step outputs. These step outputs can be used throughout the workflow file.
-      id: strings
-      shell: bash
-      run: |
-        echo "build-output-dir=${{ github.workspace }}/build" >> "$GITHUB_OUTPUT"
+      - name: Set reusable strings
+        # Turn repeated input strings (such as the build output directory) into step outputs. These step outputs can be used throughout the workflow file.
+        id: strings
+        shell: bash
+        run: |
+          echo "build-output-dir=${{ github.workspace }}/build" >> "$GITHUB_OUTPUT"
 
-    - name: linux install deps
-      if: runner.os == 'Linux'
-      run: |
-        sudo apt update
-        sudo apt install llvm libclang-dev -y
+      - name: linux install deps
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt update
+          sudo apt install llvm libclang-dev -y
 
-    - name: macos install deps
-      if: runner.os == 'macOS'
-      run: |
-        brew update
-        brew search llvm
-        brew install llvm@18
-        brew --prefix llvm@18
+      - name: macos install deps
+        if: runner.os == 'macOS'
+        run: |
+          brew update
+          brew search llvm
+          brew install llvm@18
+          brew --prefix llvm@18
 
-    - name: Set up LLVM environment
-      if: runner.os == 'macOS'
-      run: |
-        LLVM_PREFIX=$(brew --prefix llvm@18)
-        echo "CXXFLAGS=-stdlib=libstdc++" >> $GITHUB_ENV
-        echo "CC=$LLVM_PREFIX/bin/clang" >> $GITHUB_ENV
-        echo "CXX=$LLVM_PREFIX/bin/clang++" >> $GITHUB_ENV
-        echo "LLVM_DIR=$LLVM_PREFIX/lib/cmake/llvm" >> $GITHUB_ENV
-        echo "PATH=$LLVM_PREFIX/bin:$PATH" >> $GITHUB_ENV
-        echo "LDFLAGS=-L$LLVM_PREFIX/lib -Wl,-rpath,$LLVM_PREFIX/lib" >> $GITHUB_ENV
-        echo "CPPFLAGS=-I$LLVM_PREFIX/include" >> $GITHUB_ENV
-        echo "LLVM_PREFIX: $LLVM_PREFIX"
-        echo "CC: $CC"
-        echo "CXX: $CXX"
-        echo "LLVM_DIR: $LLVM_DIR"
+      - name: Set up LLVM environment
+        if: runner.os == 'macOS'
+        run: |
+          echo "LLVM_DIR=$(brew --prefix llvm@18)/lib/cmake/llvm" >> $GITHUB_ENV
+          echo "PATH=$(brew --prefix llvm@18)/bin:$PATH" >> $GITHUB_ENV
+          echo "LDFLAGS=-L$(brew --prefix llvm@18)/lib -Wl,-rpath,$(brew --prefix llvm)/lib" >> $GITHUB_ENV
+          echo "CPPFLAGS=-I$(brew --prefix llvm@18)/include" >> $GITHUB_ENV
 
-    - name: Install LLVM via Chocolatey
-      if: runner.os == 'Windows'
-      run: |
-#        vcpkg install llvm:x64-windows
-#        choco search llvm --all-versions -r
-#        choco info llvm
-#        choco install llvm -y --version=18.1.8 --force
-#        echo "验证Chocolatey安装"
-#        choco list | findstr llvm
-#        echo "LLVM_DIR=C:\Program Files\LLVM\lib\cmake\llvm" >> $env:GITHUB_ENV
-#        echo "PATH=C:\Program Files\LLVM\bin;$env:PATH" >> $env:GITHUB_ENV
-        $llvmUrl = "https://github.com/llvm/llvm-project/releases/download/llvmorg-18.1.8/clang+llvm-18.1.8-x86_64-pc-windows-msvc.tar.xz"
-        $downloadPath = "$env:RUNNER_TEMP\llvm.tar.xz"
-        Invoke-WebRequest -Uri $llvmUrl -OutFile $downloadPath
-        echo "LLVM downloaded to $downloadPath"
-        $downloadPath = "$env:RUNNER_TEMP\llvm.tar.xz"
-        $extractPath = "$env:RUNNER_TEMP\llvm-extracted"
-        7z x $downloadPath -o"$extractPath" -y
-        $llvmDir = Get-ChildItem -Path $extractPath -Directory | Select-Object -First 1
-        $installPath = "C:/Program Files/LLVM"
-        Move-Item $llvmDir.FullName $installPath
+      - name: win vcpkg install deps
+        if: runner.os == 'Windows'
+        run: |
+        #        vcpkg install llvm:x64-windows
 
-    - name: Set environment variables
-      run: |
-        $installPath = "C:/Program Files/LLVM"
-        echo "LLVM_PREFIX=$installPath" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
-        echo "Path=$installPath\bin;$env:Path" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
-        dir "$installPath\bin" | findstr "llvm-config.exe"
-        echo "LLVM installed successfully"
+      - name: Install LLVM via Chocolatey
+        if: runner.os == 'Windows'
+        run: |
+          choco search llvm --all-versions -r
+          choco info llvm
+          choco install llvm -y --version=18.1.8 --force
+          echo "LLVM_DIR=C:\Program Files\LLVM\lib\cmake\llvm" >> $env:GITHUB_ENV
+          echo "PATH=C:\Program Files\LLVM\bin;$env:PATH" >> $env:GITHUB_ENV
 
-    - name: Configure CMake
-      # Configure CMake in a 'build' subdirectory. `CMAKE_BUILD_TYPE` is only required if you are using a single-configuration generator such as make.
-      # See https://cmake.org/cmake/help/latest/variable/CMAKE_BUILD_TYPE.html?highlight=cmake_build_type
-      run: >
-        cmake -B ${{ steps.strings.outputs.build-output-dir }}
-        -DCMAKE_CXX_COMPILER=${{ matrix.cpp_compiler }}
-        -DCMAKE_C_COMPILER=${{ matrix.c_compiler }}
-        -DCMAKE_BUILD_TYPE=${{ matrix.build_type }}
-        -S ${{ github.workspace }}
+      - name: Configure CMake
+        # Configure CMake in a 'build' subdirectory. `CMAKE_BUILD_TYPE` is only required if you are using a single-configuration generator such as make.
+        # See https://cmake.org/cmake/help/latest/variable/CMAKE_BUILD_TYPE.html?highlight=cmake_build_type
+        run: >
+          cmake -B ${{ steps.strings.outputs.build-output-dir }}
+          -DCMAKE_CXX_COMPILER=${{ matrix.cpp_compiler }}
+          -DCMAKE_C_COMPILER=${{ matrix.c_compiler }}
+          -DCMAKE_BUILD_TYPE=${{ matrix.build_type }}
+          -S ${{ github.workspace }}
 
-    - name: Build
-      # Build your program with the given configuration. Note that --config is needed because the default Windows generator is a multi-config generator (Visual Studio generator).
-      run: cmake --build ${{ steps.strings.outputs.build-output-dir }} --config ${{ matrix.build_type }}
+      - name: Build
+        # Build your program with the given configuration. Note that --config is needed because the default Windows generator is a multi-config generator (Visual Studio generator).
+        run: cmake --build ${{ steps.strings.outputs.build-output-dir }} --config ${{ matrix.build_type }}
 
-    - name: Test
-      working-directory: ${{ steps.strings.outputs.build-output-dir }}
-      # Execute tests defined by the CMake configuration. Note that --build-config is needed because the default Windows generator is a multi-config generator (Visual Studio generator).
-      # See https://cmake.org/cmake/help/latest/manual/ctest.1.html for more detail
-      run: ctest --build-config ${{ matrix.build_type }}
+      - name: Test
+        working-directory: ${{ steps.strings.outputs.build-output-dir }}
+        # Execute tests defined by the CMake configuration. Note that --build-config is needed because the default Windows generator is a multi-config generator (Visual Studio generator).
+        # See https://cmake.org/cmake/help/latest/manual/ctest.1.html for more detail
+        run: ctest --build-config ${{ matrix.build_type }}
