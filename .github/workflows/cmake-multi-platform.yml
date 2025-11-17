@@ -94,6 +94,8 @@ jobs:
         choco search llvm --all-versions -r
         choco info llvm
         choco install llvm -y --version=18.1.8 --force
+        echo "验证Chocolatey安装"
+        choco list --local-only | findstr llvm
         echo "LLVM_DIR=C:\Program Files\LLVM\lib\cmake\llvm" >> $env:GITHUB_ENV
         echo "PATH=C:\Program Files\LLVM\bin;$env:PATH" >> $env:GITHUB_ENV
 
