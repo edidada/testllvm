@@ -73,17 +73,15 @@ jobs:
         brew update
         brew search llvm
         brew install llvm@18
-        export LDFLAGS="-L/opt/homebrew/opt/llvm/lib"
-        export CPPFLAGS="-I/opt/homebrew/opt/llvm/include"
-        export CMAKE_PREFIX_PATH="/opt/homebrew/opt/llvm"
+        brew --prefix llvm@18
 
     - name: Set up LLVM environment
       if: runner.os == 'macOS'
       run: |
-        echo "LLVM_DIR=$(brew --prefix llvm)/lib/cmake/llvm" >> $GITHUB_ENV
-        echo "PATH=$(brew --prefix llvm)/bin:$PATH" >> $GITHUB_ENV
-        echo "LDFLAGS=-L$(brew --prefix llvm)/lib -Wl,-rpath,$(brew --prefix llvm)/lib" >> $GITHUB_ENV
-        echo "CPPFLAGS=-I$(brew --prefix llvm)/include" >> $GITHUB_ENV
+        echo "LLVM_DIR=$(brew --prefix llvm@18)/lib/cmake/llvm" >> $GITHUB_ENV
+        echo "PATH=$(brew --prefix llvm@18)/bin:$PATH" >> $GITHUB_ENV
+        echo "LDFLAGS=-L$(brew --prefix llvm@18)/lib -Wl,-rpath,$(brew --prefix llvm)/lib" >> $GITHUB_ENV
+        echo "CPPFLAGS=-I$(brew --prefix llvm@18)/include" >> $GITHUB_ENV
 
     - name: win vcpkg install deps
       if: runner.os == 'Windows'
@@ -93,7 +91,9 @@ jobs:
     - name: Install LLVM via Chocolatey
       if: runner.os == 'Windows'
       run: |
-        choco install llvm -y --version=18.0.0 --force
+        choco search llvm --all-versions -r
+        choco info llvm
+        choco install llvm -y --version=18.1.8 --force
         echo "LLVM_DIR=C:\Program Files\LLVM\lib\cmake\llvm" >> $env:GITHUB_ENV
         echo "PATH=C:\Program Files\LLVM\bin;$env:PATH" >> $env:GITHUB_ENV
 
