@@ -44,6 +44,49 @@ jobs:
       run: |
         echo "build-output-dir=${{ github.workspace }}/build" >> "$GITHUB_OUTPUT"
 
+    - name: Create DIA SDK symlink
+      shell: powershell
+      run: |
+        # 检查目标路径是否存在
+        $targetPath = "C:\Program Files\Microsoft Visual Studio\2022\Enterprise\DIA SDK"
+        $linkPath = "C:\Program Files (x86)\Microsoft Visual Studio\2019\Professional\DIA SDK"
+        
+        if (Test-Path $targetPath) {
+            Write-Host "Target path exists: $targetPath"
+        
+            # 删除已存在的路径（如果是普通目录）
+            if (Test-Path $linkPath) {
+                Write-Host "Removing existing path..."
+                Remove-Item $linkPath -Force -Recurse -ErrorAction SilentlyContinue
+            }
+        
+            # 创建符号链接（需要管理员权限）
+            try {
+                New-Item -ItemType SymbolicLink -Path $linkPath -Target $targetPath
+                Write-Host "Symbolic link created successfully!"
+            }
+            catch {
+                Write-Host "Failed to create symlink: $_"
+                Write-Host "Trying with mklink..."
+                cmd /c mklink /D "$linkPath" "$targetPath"
+            }
+        } else {
+            Write-Host "Target path not found: $targetPath"
+            # 列出可用的Visual Studio安装
+            Get-ChildItem "C:\Program Files\Microsoft Visual Studio\*" | ForEach-Object { Write-Host "Found: $($_.FullName)" }
+        }
+
+    - name: Verify symlink
+      shell: powershell
+      run: |
+        $testPath = "C:\Program Files (x86)\Microsoft Visual Studio\2019\Professional\DIA SDK\lib\amd64\diaguids.lib"
+        if (Test-Path $testPath) {
+            Write-Host "✓ DIA SDK symlink verified successfully"
+        } else {
+            Write-Host "✗ DIA SDK symlink verification failed"
+            Get-ChildItem "C:\Program Files (x86)\Microsoft Visual Studio\2019\Professional\" -ErrorAction SilentlyContinue
+        }
+
     - name: Install tools via Chocolatey
       run: |
         choco install wget 7zip -y --force
