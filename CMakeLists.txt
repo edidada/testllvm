@@ -3,7 +3,6 @@ project(testllvm)
 
 set(CMAKE_CXX_STANDARD 17)
 
-# Windows 特定设置
 if(WIN32)
     # 手动设置路径
     set(LLVM_DIR "C:/LLVM/clang+llvm-18.1.8-x86_64-pc-windows-msvc/lib/cmake/llvm")
@@ -20,7 +19,22 @@ if(WIN32)
             support
             orcjit
             nativecodegen
+            x64codegen
     )
+    # VS2022 Enterprise 默认 DIA SDK 路径
+    set(DIA_SDK_ROOT "C:/Program Files/Microsoft Visual Studio/2022/Enterprise/DIA SDK")
+
+    if(EXISTS "${DIA_SDK_ROOT}/lib/amd64/diaguids.lib")
+        # 加入链接目录
+        link_directories("${DIA_SDK_ROOT}/lib/amd64")
+        message(STATUS "DIA SDK found and linked: ${DIA_SDK_ROOT}/lib/amd64")
+
+        # 可选：显式链接 diaguids.lib（更保险）
+        list(APPEND LLVM_LIBS "diaguids.lib")
+    else()
+        message(WARNING "DIA SDK not found at ${DIA_SDK_ROOT}")
+        message(WARNING "  → If you don't need PDB, replace 'native' with 'nativecodegen'")
+    endif()
     # 添加可执行文件
     add_executable(testllvm src/main.cpp)
     add_executable(testpass src/testpass.cpp)
