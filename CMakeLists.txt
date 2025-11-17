@@ -73,8 +73,8 @@ else()
     )
 
     add_executable(testllvm src/main.cpp)
-    add_library(testpass MODULE src/testpass.cpp)
-    add_library(testpass2 MODULE src/testpass2.cpp)
+    add_executable(testpass src/testpass.cpp)
+    add_executable(testpass2 src/testpass2.cpp)
 
     target_link_libraries(testllvm ${llvm_libs})
     target_link_libraries(testpass ${llvm_libs})
