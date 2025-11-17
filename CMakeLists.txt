@@ -6,7 +6,7 @@ set(CMAKE_CXX_STANDARD 17)
 # Windows 特定设置
 if(WIN32)
     # 手动设置路径
-    set(LLVM_PREFIX "C:/Program Files/LLVM")
+    set(LLVM_PREFIX "C:/LLVM")
     set(LLVM_INCLUDE_DIRS "${LLVM_PREFIX}/include")
     set(LLVM_LIBRARY_DIRS "${LLVM_PREFIX}/lib")
 

@@ -44,27 +44,29 @@ jobs:
       run: |
         echo "build-output-dir=${{ github.workspace }}/build" >> "$GITHUB_OUTPUT"
 
-
-    - name: Install LLVM via Chocolatey
+    - name: Install tools via Chocolatey
       run: |
-        $llvmUrl = "https://github.com/llvm/llvm-project/releases/download/llvmorg-18.1.8/clang+llvm-18.1.8-x86_64-pc-windows-msvc.tar.xz"
-        $downloadPath = "$env:RUNNER_TEMP\llvm.tar.xz"
-        Invoke-WebRequest -Uri $llvmUrl -OutFile $downloadPath
-        echo "LLVM downloaded to $downloadPath"
-        $downloadPath = "$env:RUNNER_TEMP\llvm.tar.xz"
-        $extractPath = "$env:RUNNER_TEMP\llvm-extracted"
-        7z x $downloadPath -o"$extractPath" -y
-        $llvmDir = Get-ChildItem -Path $extractPath -Directory | Select-Object -First 1
-        $installPath = "C:/Program Files/LLVM"
-        Move-Item $llvmDir.FullName $installPath
+        choco install wget 7zip -y --force
+
+    - name: Download LLVM
+      run: |
+        wget https://github.com/llvm/llvm-project/releases/download/llvmorg-18.1.8/clang+llvm-18.1.8-x86_64-pc-windows-msvc.tar.xz -O llvm.tar.xz
+
+    - name: Extract LLVM to C:\LLVM
+      run: |
+        7z x llvm.tar.xz -oC:\LLVM -y
+        cd "C:\LLVM"
+        dir
 
     - name: Set environment variables
       run: |
-        $installPath = "C:/Program Files/LLVM"
-        echo "LLVM_PREFIX=$installPath" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
-        echo "Path=$installPath\bin;$env:Path" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
-        dir "$installPath\bin" | findstr "llvm-config.exe"
-        echo "LLVM installed successfully"
+        echo "LLVM_PREFIX=C:\LLVM" >> $env:GITHUB_ENV
+        echo "PATH=C:\LLVM\bin;$env:PATH" >> $env:GITHUB_ENV
+
+    - name: Verify installation
+      run: |
+        llvm-config --version
+        dir C:\LLVM\bin\llvm-config.exe
 
     - name: Configure CMake
       # Configure CMake in a 'build' subdirectory. `CMAKE_BUILD_TYPE` is only required if you are using a single-configuration generator such as make.
