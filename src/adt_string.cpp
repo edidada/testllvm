@@ -2,11 +2,20 @@
 #include "llvm/Support/MemoryBuffer.h"
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/Support/Error.h"
+#include "llvm/Config/llvm-config.h"
 #include <system_error>
 
 using namespace llvm;
 
 int main() {
+    // 示例1: 使用StringRef处理字符串
+
+    // 获取LLVM版本信息
+    outs() << "LLVM版本: " << LLVM_VERSION_STRING << "\n";
+    outs() << "主版本: " << LLVM_VERSION_MAJOR << "\n";
+    outs() << "次版本: " << LLVM_VERSION_MINOR << "\n";
+    outs() << "补丁版本: " << LLVM_VERSION_PATCH << "\n";
+
     // 示例1: 使用StringRef处理字符串
     StringRef str = "Hello, LLVM 17!";
     errs() << "String: " << str << "\n";
