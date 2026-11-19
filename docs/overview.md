@@ -2,14 +2,14 @@
 
 ## 仓库定位
 
-这是一个基于 **LLVM 18** 的 C++ 学习与演示项目（不是库、也不是完整编译器）。它用一组互相独立的小程序，演示 LLVM 核心 API 的典型用法：
+这是一个基于 LLVM 18 的 C++ 学习与演示项目（不是库、也不是完整编译器）。它用一组互相独立的小程序，演示 LLVM 核心 API 的典型用法：
 
 - 在运行时用 `IRBuilder` 构造 LLVM IR；
 - 通过 ORC `LLJIT` 把 IR 即时编译（JIT）成本机代码并调用；
 - 用 legacy `FunctionPassManager` 运行优化 Pass，观察优化前后的 IR 变化；
 - 使用 LLVM ADT / Support 里的常用工具类（`StringRef`、`MemoryBuffer`、`raw_ostream`、版本宏等）。
 
-> 注意：代码依赖 LLVM 18 的新接口（例如 `ExecutorAddr::toPtr<T>()`、`StringRef::contains()`），**LLVM 14 无法通过编译**，README 中已注明「llvm18 可以，llvm14 不行」。
+> 注意：代码依赖 LLVM 18 的新接口（例如 `ExecutorAddr::toPtr<T>()`、`StringRef::contains()`），LLVM 14 无法通过编译，README 中已注明「llvm18 可以，llvm14 不行」。
 
 ## 目录结构
 
@@ -34,8 +34,8 @@
 
 `CMakeLists.txt` 使用 `find_package(LLVM REQUIRED CONFIG)`，并分别链接 `core`、`support`、`orcjit`、`native`（Linux 还额外链接 `executionengine`）等组件。
 
-- **Windows**：LLVM 路径被硬编码为 `C:/LLVM/clang+llvm-18.1.8-x86_64-pc-windows-msvc`，并尝试链接 VS2022 的 DIA SDK（`diaguids.lib`）以支持 PDB；同时链接 `advapi32`、`shell32`。
-- **Linux / macOS**：依赖系统安装的 LLVM（`LLVM_DIR` 指向 `lib/cmake/llvm`），CMake 打印 `LLVM_PACKAGE_VERSION`、`LLVM_DEFINITIONS` 等信息。
+- Windows：LLVM 路径被硬编码为 `C:/LLVM/clang+llvm-18.1.8-x86_64-pc-windows-msvc`，并尝试链接 VS2022 的 DIA SDK（`diaguids.lib`）以支持 PDB；同时链接 `advapi32`、`shell32`。
+- Linux / macOS：依赖系统安装的 LLVM（`LLVM_DIR` 指向 `lib/cmake/llvm`），CMake 打印 `LLVM_PACKAGE_VERSION`、`LLVM_DEFINITIONS` 等信息。
 
 五个源文件各自编译成独立的可执行文件，彼此之间没有共享代码。
 
