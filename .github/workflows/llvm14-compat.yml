@@ -1,0 +1,56 @@
+# 验证源码在 LLVM 14（最低支持版本）及 LLVM 18（及以上）都能编译并运行。
+# 与现有 workflow 一样执行 CMake 配置 / 构建 / ctest，并额外实际运行 5 个 demo。
+# 15 / 16 / 17 走与 18 相同的 API 分支（ExecutorAddr::toPtr），故取两端验证。
+name: CMake with LLVM 14+
+
+on:
+  push:
+    branches: [ "multiple" ]
+  pull_request:
+    branches: [ "multiple" ]
+  workflow_dispatch:
+
+env:
+  BUILD_TYPE: Release
+
+jobs:
+  build:
+    runs-on: ubuntu-24.04
+
+    strategy:
+      fail-fast: false
+      matrix:
+        llvm_version: [14, 18]
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install LLVM ${{ matrix.llvm_version }}
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y llvm-${{ matrix.llvm_version }}-dev
+          /usr/lib/llvm-${{ matrix.llvm_version }}/bin/llvm-config --version
+
+      - name: Configure CMake
+        run: >
+          cmake -B ${{ github.workspace }}/build
+          -DLLVM_DIR=/usr/lib/llvm-${{ matrix.llvm_version }}/lib/cmake/llvm
+          -DCMAKE_BUILD_TYPE=${{ env.BUILD_TYPE }}
+          -S ${{ github.workspace }}
+
+      - name: Build
+        run: cmake --build ${{ github.workspace }}/build --config ${{ env.BUILD_TYPE }}
+
+      - name: Test
+        working-directory: ${{ github.workspace }}/build
+        run: ctest --build-config ${{ env.BUILD_TYPE }}
+
+      - name: Run demos
+        working-directory: ${{ github.workspace }}/build
+        run: |
+          ./testllvm
+          ./testpass
+          ./testpass2
+          printf 'hello LLVM\nerror: sample line\n' > example.txt
+          ./adt_string
+          ./adt example.txt

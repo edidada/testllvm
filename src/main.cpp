@@ -1,5 +1,7 @@
 #include <cstdint>
 
+#include "llvm/Config/llvm-config.h"
+#include "llvm/ExecutionEngine/JITSymbol.h"
 #include "llvm/ExecutionEngine/Orc/LLJIT.h"
 #include "llvm/ExecutionEngine/Orc/ThreadSafeModule.h"
 #include "llvm/IR/LLVMContext.h"
@@ -49,12 +51,17 @@ int main(int argc, char* argv[]) {
     ThreadSafeContext TSC(std::move(Context));  // Context 移入 TSC
     cantFail(JIT->addIRModule(ThreadSafeModule(std::move(M), TSC)));
 
-    // 9. 查找符号 (LLVM 18+ 写法：使用 toPtr<T>() 安全转换)
+    // 9. 查找符号（LLVM 14 与 15+ 的返回类型不同，按版本选择写法）
     using AddFunction = int(*)(int, int);
 
     auto AddSym = cantFail(JIT->lookup("add"));
-    // 使用 toPtr<T>() 直接将 ExecutorAddr 转换为函数指针
+    // LLVM 14: lookup 返回 JITEvaluatedSymbol，需把 JITTargetAddress 转成函数指针；
+    // LLVM 15+: lookup 返回 ExecutorAddr，可直接 toPtr<T>()。
+#if LLVM_VERSION_MAJOR >= 15
     auto *add = AddSym.toPtr<AddFunction>();
+#else
+    auto *add = jitTargetAddressToFunction<AddFunction>(AddSym.getAddress());
+#endif
 
     std::cout << "3 + 4 = " << add(3, 4) << std::endl;
 

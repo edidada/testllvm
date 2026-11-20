@@ -1,5 +1,6 @@
 # README
-llvm18可以，llvm14不行的
+LLVM 14 及以上版本均可编译运行（源码按 `LLVM_VERSION_MAJOR` 兼容 14 / 15+ 两套 API）。
+以下为 LLVM 18 的运行输出示例：
 ```shell
 /mnt/d/develops/git/github/cpp/testllvm/cmake-build-debug-wsl24/testllvm
 ; ModuleID = 'jit_module'

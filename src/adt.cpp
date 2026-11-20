@@ -3,6 +3,8 @@
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/Support/Error.h"
 #include "llvm/Support/FileSystem.h"
+#include <memory>
+#include <tuple>
 #include <vector>
 
 using namespace llvm;
@@ -40,7 +42,7 @@ int main(int argc, char **argv) {
 
     StringRef filename = argv[1];
 
-    // 使用新的LLVM 17 Error处理方式
+    // MemoryBuffer::getFile 在所有 LLVM 14+ 版本都返回 ErrorOr
     auto bufferOrError = MemoryBuffer::getFile(filename);
     if (!bufferOrError) {
         errs() << "Error opening file: " << filename << "\n";

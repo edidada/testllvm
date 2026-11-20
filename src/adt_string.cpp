@@ -3,7 +3,9 @@
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/Support/Error.h"
 #include "llvm/Config/llvm-config.h"
+#include <memory>
 #include <system_error>
+#include <utility>
 
 using namespace llvm;
 
@@ -17,7 +19,7 @@ int main() {
     outs() << "补丁版本: " << LLVM_VERSION_PATCH << "\n";
 
     // 示例1: 使用StringRef处理字符串
-    StringRef str = "Hello, LLVM 17!";
+    StringRef str = "Hello, LLVM 14+!";
     errs() << "String: " << str << "\n";
     errs() << "Length: " << str.size() << "\n";
     errs() << "Contains 'LLVM': " << str.contains("LLVM") << "\n";

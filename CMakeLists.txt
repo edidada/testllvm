@@ -4,10 +4,14 @@ project(testllvm)
 set(CMAKE_CXX_STANDARD 17)
 
 if(WIN32)
-    # 手动设置路径
-    set(LLVM_DIR "C:/LLVM/clang+llvm-18.1.8-x86_64-pc-windows-msvc/lib/cmake/llvm")
+    # 可用 -DLLVM_PREFIX=... 或 -DLLVM_DIR=... 指定任意 LLVM 14+ 安装路径
+    set(LLVM_PREFIX "C:/LLVM/clang+llvm-18.1.8-x86_64-pc-windows-msvc"
+        CACHE PATH "LLVM install prefix")
+    if(NOT LLVM_DIR)
+        set(LLVM_DIR "${LLVM_PREFIX}/lib/cmake/llvm")
+    endif()
     find_package(LLVM REQUIRED CONFIG)
-    set(LLVM_PREFIX "C:/LLVM/clang+llvm-18.1.8-x86_64-pc-windows-msvc")
+    message(STATUS "Building against LLVM ${LLVM_PACKAGE_VERSION}")
     set(LLVM_INCLUDE_DIRS "${LLVM_PREFIX}/include")
     set(LLVM_LIBRARY_DIRS "${LLVM_PREFIX}/lib")
 
