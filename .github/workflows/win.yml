@@ -7,21 +7,14 @@ on:
     branches: [ "multiple" ]
   pull_request:
     branches: [ "multiple" ]
+  workflow_dispatch:
 
 jobs:
   build:
     runs-on: ${{ matrix.os }}
 
     strategy:
-      # Set fail-fast to false to ensure that feedback is delivered for all matrix combinations. Consider changing this to true when your workflow is stable.
       fail-fast: false
-
-      # Set up a matrix to run the following 3 configurations:
-      # 1. <Windows, Release, latest MSVC compiler toolchain on the default runner image, default generator>
-      # 2. <Linux, Release, latest GCC compiler toolchain on the default runner image, default generator>
-      # 3. <Linux, Release, latest Clang compiler toolchain on the default runner image, default generator>
-      #
-      # To add more build types (Release, Debug, RelWithDebInfo, etc.) customize the build_type list.
       matrix:
         os: [windows-2022, windows-latest]
         build_type: [Release, Debug]
@@ -38,53 +31,31 @@ jobs:
     - uses: actions/checkout@v4
 
     - name: Set reusable strings
-      # Turn repeated input strings (such as the build output directory) into step outputs. These step outputs can be used throughout the workflow file.
       id: strings
       shell: bash
       run: |
         echo "build-output-dir=${{ github.workspace }}/build" >> "$GITHUB_OUTPUT"
 
-    - name: Create DIA SDK symlink
-      shell: powershell
+    # Best effort: some LLVM builds look for the DIA SDK at the VS2019 path.
+    # Create its parent directory first, and never fail the job if the link
+    # cannot be created (CMakeLists.txt also probes the VS2022 path directly).
+    - name: Prepare DIA SDK path
+      shell: pwsh
       run: |
-        # 检查目标路径是否存在
-        $targetPath = "C:\Program Files\Microsoft Visual Studio\2022\Enterprise\DIA SDK"
-        $linkPath = "C:\Program Files (x86)\Microsoft Visual Studio\2019\Professional\DIA SDK"
-        
-        if (Test-Path $targetPath) {
-            Write-Host "Target path exists: $targetPath"
-        
-            # 删除已存在的路径（如果是普通目录）
-            if (Test-Path $linkPath) {
-                Write-Host "Removing existing path..."
-                Remove-Item $linkPath -Force -Recurse -ErrorAction SilentlyContinue
-            }
-        
-            # 创建符号链接（需要管理员权限）
+        $target = 'C:\Program Files\Microsoft Visual Studio\2022\Enterprise\DIA SDK'
+        $link = 'C:\Program Files (x86)\Microsoft Visual Studio\2019\Professional\DIA SDK'
+        if (Test-Path -LiteralPath $target) {
+          New-Item -ItemType Directory -Force -Path (Split-Path -Parent $link) | Out-Null
+          if (-not (Test-Path -LiteralPath $link)) {
             try {
-                New-Item -ItemType SymbolicLink -Path $linkPath -Target $targetPath
-                Write-Host "Symbolic link created successfully!"
+              New-Item -ItemType SymbolicLink -Path $link -Target $target -ErrorAction Stop | Out-Null
+              Write-Host 'DIA SDK symlink created'
+            } catch {
+              Write-Host "DIA SDK symlink skipped: $($_.Exception.Message)"
             }
-            catch {
-                Write-Host "Failed to create symlink: $_"
-                Write-Host "Trying with mklink..."
-                cmd /c mklink /D "$linkPath" "$targetPath"
-            }
+          }
         } else {
-            Write-Host "Target path not found: $targetPath"
-            # 列出可用的Visual Studio安装
-            Get-ChildItem "C:\Program Files\Microsoft Visual Studio\*" | ForEach-Object { Write-Host "Found: $($_.FullName)" }
-        }
-
-    - name: Verify symlink
-      shell: powershell
-      run: |
-        $testPath = "C:\Program Files (x86)\Microsoft Visual Studio\2019\Professional\DIA SDK\lib\amd64\diaguids.lib"
-        if (Test-Path $testPath) {
-            Write-Host "✓ DIA SDK symlink verified successfully"
-        } else {
-            Write-Host "✗ DIA SDK symlink verification failed"
-            Get-ChildItem "C:\Program Files (x86)\Microsoft Visual Studio\2019\Professional\" -ErrorAction SilentlyContinue
+          Write-Host 'VS2022 DIA SDK not found, skipping symlink'
         }
 
     - name: Install tools via Chocolatey
@@ -116,8 +87,6 @@ jobs:
         dir C:\LLVM\clang+llvm-18.1.8-x86_64-pc-windows-msvc\bin\llvm-config.exe
 
     - name: Configure CMake
-      # Configure CMake in a 'build' subdirectory. `CMAKE_BUILD_TYPE` is only required if you are using a single-configuration generator such as make.
-      # See https://cmake.org/cmake/help/latest/variable/CMAKE_BUILD_TYPE.html?highlight=cmake_build_type
       run: >
         cmake -B ${{ steps.strings.outputs.build-output-dir }}
         -DCMAKE_CXX_COMPILER=${{ matrix.cpp_compiler }}
@@ -126,11 +95,8 @@ jobs:
         -S ${{ github.workspace }}
 
     - name: Build
-      # Build your program with the given configuration. Note that --config is needed because the default Windows generator is a multi-config generator (Visual Studio generator).
       run: cmake --build ${{ steps.strings.outputs.build-output-dir }} --config ${{ matrix.build_type }}
 
     - name: Test
       working-directory: ${{ steps.strings.outputs.build-output-dir }}
-      # Execute tests defined by the CMake configuration. Note that --build-config is needed because the default Windows generator is a multi-config generator (Visual Studio generator).
-      # See https://cmake.org/cmake/help/latest/manual/ctest.1.html for more detail
       run: ctest --build-config ${{ matrix.build_type }}
