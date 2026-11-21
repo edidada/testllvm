@@ -36,27 +36,38 @@ jobs:
       run: |
         echo "build-output-dir=${{ github.workspace }}/build" >> "$GITHUB_OUTPUT"
 
-    # Best effort: some LLVM builds look for the DIA SDK at the VS2019 path.
-    # Create its parent directory first, and never fail the job if the link
-    # cannot be created (CMakeLists.txt also probes the VS2022 path directly).
+    # The LLVM 18.1.8 Windows export targets reference diaguids.lib by an
+    # absolute VS2019 DIA SDK path. VS lives in different folders on the two
+    # runner images, so locate the lib and copy it to the expected path.
     - name: Prepare DIA SDK path
       shell: pwsh
       run: |
-        $target = 'C:\Program Files\Microsoft Visual Studio\2022\Enterprise\DIA SDK'
-        $link = 'C:\Program Files (x86)\Microsoft Visual Studio\2019\Professional\DIA SDK'
-        if (Test-Path -LiteralPath $target) {
-          New-Item -ItemType Directory -Force -Path (Split-Path -Parent $link) | Out-Null
-          if (-not (Test-Path -LiteralPath $link)) {
-            try {
-              New-Item -ItemType SymbolicLink -Path $link -Target $target -ErrorAction Stop | Out-Null
-              Write-Host 'DIA SDK symlink created'
-            } catch {
-              Write-Host "DIA SDK symlink skipped: $($_.Exception.Message)"
-            }
+        $dest = 'C:\Program Files (x86)\Microsoft Visual Studio\2019\Professional\DIA SDK\lib\amd64'
+        $candidates = @()
+        $vswhere = 'C:\Program Files (x86)\Microsoft Visual Studio\Installer\vswhere.exe'
+        if (Test-Path -LiteralPath $vswhere) {
+          foreach ($root in (& $vswhere -latest -products * -property installationPath)) {
+            $candidates += (Join-Path $root 'DIA SDK\lib\amd64\diaguids.lib')
           }
-        } else {
-          Write-Host 'VS2022 DIA SDK not found, skipping symlink'
         }
+        $candidates += @(
+          'C:\Program Files\Microsoft Visual Studio\2022\Enterprise\DIA SDK\lib\amd64\diaguids.lib',
+          'C:\Program Files\Microsoft Visual Studio\2022\Professional\DIA SDK\lib\amd64\diaguids.lib',
+          'C:\Program Files\Microsoft Visual Studio\2022\Community\DIA SDK\lib\amd64\diaguids.lib'
+        )
+        $src = $candidates | Where-Object { Test-Path -LiteralPath $_ } | Select-Object -First 1
+        if (-not $src) {
+          $found = Get-ChildItem -Path 'C:\Program Files\Microsoft Visual Studio', 'C:\Program Files (x86)\Microsoft Visual Studio' -Filter diaguids.lib -Recurse -ErrorAction SilentlyContinue | Select-Object -First 1
+          if ($found) { $src = $found.FullName }
+        }
+        if ($src) {
+          New-Item -ItemType Directory -Force -Path $dest | Out-Null
+          Copy-Item -LiteralPath $src -Destination (Join-Path $dest 'diaguids.lib') -Force
+          Write-Host "diaguids.lib provisioned from $src"
+        } else {
+          Write-Host '::warning::diaguids.lib not found on this runner image'
+        }
+        $global:LASTEXITCODE = 0
 
     - name: Install tools via Chocolatey
       run: |
@@ -86,12 +97,18 @@ jobs:
         llvm-config --version
         dir C:\LLVM\clang+llvm-18.1.8-x86_64-pc-windows-msvc\bin\llvm-config.exe
 
+    # The prebuilt LLVM Windows libs are Release /MD with _ITERATOR_DEBUG_LEVEL=0.
+    # Debug configs must match that ABI or the linker reports LNK2038.
     - name: Configure CMake
       run: >
         cmake -B ${{ steps.strings.outputs.build-output-dir }}
         -DCMAKE_CXX_COMPILER=${{ matrix.cpp_compiler }}
         -DCMAKE_C_COMPILER=${{ matrix.c_compiler }}
         -DCMAKE_BUILD_TYPE=${{ matrix.build_type }}
+        -DCMAKE_MSVC_RUNTIME_LIBRARY=MultiThreadedDLL
+        -DCMAKE_CXX_FLAGS="/D_ITERATOR_DEBUG_LEVEL=0"
+        -DCMAKE_CXX_FLAGS_DEBUG="/MD /Zi /Ob0 /Od"
+        -DCMAKE_C_FLAGS_DEBUG="/MD /Zi /Ob0 /Od"
         -S ${{ github.workspace }}
 
     - name: Build
